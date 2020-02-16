@@ -1,19 +1,28 @@
 /**
    Nano LFO
    2 Channel LFO with multiple waveforms
-   - Sine
-   - Selectable
+   - One channel fixed (Sine, triangle.... you pick and hard code it)
+   - Other channel Selectable
      - Sine
      - Triangle
-     -
-
+     - Ramp up
+     - Ramp Down
+     - Psycho 1 and 2
 
    Improvements to do
+   Add decaying wave
    https://daycounter.com/Calculators/Decaying-Wave-Generator-Calculator.phtml
 
    fast pwm
    fast read of analog pin
    http://yaab-arduino.blogspot.com/2015/02/fast-sampling-from-analog-input.html
+   This would ont be important if you had a modulation going to this.
+
+   Sync might be nice
+
+
+   This is set up for two LFOs because I have the room for it, but you could build
+   a fine LFO with just one.
 
    Rob Stave (Rob the fiddler) ccby 2020
 */
@@ -109,7 +118,6 @@ uint8_t  sine_wave[256] = {
 
 #define VERBOSE_LOGS 0
 
-
 //wavetable pointer
 volatile uint8_t loop1Count = 255;
 volatile uint8_t loop2Count = 255;
@@ -141,13 +149,13 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Hello world");
 
-  pinMode(3, OUTPUT); // lfo1 a
+  pinMode(3, OUTPUT); // lfo1 a  PWM
   pinMode(4, OUTPUT); // digital square
-  pinMode(5, OUTPUT); // lfo1 b
+  pinMode(5, OUTPUT); // lfo1 b  PWM
 
-  pinMode(6, OUTPUT); //lfo2 a
+  pinMode(6, OUTPUT); //lfo2 a  PWM
   pinMode(7, OUTPUT);  // digital out sqaure LFO2
-  pinMode(11, OUTPUT); //   lfo2 b
+  pinMode(11, OUTPUT); //   lfo2 b  PWM
 
   pinMode(A0, INPUT); // LFO 1 input
   pinMode(A1, INPUT); // LFO 2 input
@@ -171,6 +179,10 @@ void setup() {
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
 
+// Juice up 3 and 11 (Nano specific) to nano
+TCCR2B = TCCR2B & 0b11111000 | 0x01;
+// Juice up 5 and 6  Timer 0
+TCCR0B = TCCR0B & 0b11111000 |  0x01;
 
 
   interrupts();             // enable all interrupts
@@ -376,7 +388,7 @@ uint8_t calculateValue(int lfo, uint8_t state, uint8_t value) {
 
   if (state == PSYCHO2) {
     if (lfo == LFO1) {
-      return psycho2(2, value);
+      return psycho1(2, value);
     } else {
       return psycho2(2, value);
     }
@@ -416,9 +428,7 @@ uint8_t toggleState(uint8_t state) {
 
 void loop() {
 
-  //We are going to average the value here so its a tad smoother
-  int f1Sample[4] = {0, 0, 0, 0};
-  int f2Sample[4] = {0, 0, 0, 0};
+ 
   byte counter = 0;
 
   byte counter2 = 0;
@@ -440,14 +450,10 @@ void loop() {
     }
 
     if ( counter % 2 == 0) {
-      // f1Sample[counter] = analogRead(A0);
-
-      //int speed_read1 = (f1Sample[0] + f1Sample[1] + f1Sample[2] + f1Sample[3]) >> 2;
+   
       int speed_read1 = analogRead(A0);
       oscFreq1 = map(speed_read1, 0, 1023, LFO1_LOW,  LFO1_HIGH);
     } else {
-      //f2Sample[counter] = analogRead(A1);
-      //int speed_read2 = (f2Sample[0] + f2Sample[1] + f2Sample[2] + f2Sample[3]) >> 2;
       int speed_read2 = analogRead(A1);
       oscFreq2 = map(speed_read2, 0, 1023, LFO2_LOW,  LFO2_HIGH);
     }
