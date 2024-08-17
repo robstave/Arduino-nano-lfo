@@ -15,8 +15,8 @@ So a basic platform that you can optimize, and build out from, without having to
 
 ### Challenges
 
-The biggest limitation for arduino is that you get 6 PWM. Since the arduino controls those 6 pwms across its 3 timers, if you want to do interrupts using timers, you kinda have to balance that.
-I am using Timer 1, so pins 9, 10 just did not work.
+The biggest limitation for arduino is that you get 6 PWM across its 3 timers.  PWM and Timers are tied together. If you want to do interrupts using timers, you kinda have to balance that otherwise things get screwy.
+I am using Timer 1, so pins 9, 10 just did not work for PWM.
 
 https://forum.arduino.cc/index.php?topic=426773.0
 
